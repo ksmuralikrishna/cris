@@ -23,6 +23,8 @@ class Registration extends Model
         'emirates_id_hash',
         'emirates_id_image_path',
         'image_uploaded_at',
+        'emirates_id_image_back_path',
+        'image_back_uploaded_at',
         'nationality',
         'area_of_residence',
         'preferred_language',

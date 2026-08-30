@@ -58,7 +58,8 @@ class RegistrationController extends Controller
             ],
 
             'emirates_id_number' => ['required', 'string', 'regex:/^784-\d{4}-\d{7}-\d{1}$/'],
-            'emirates_id_image' => 'nullable|image|max:5120',
+            'emirates_id_image_front' => 'nullable|image|max:5120',
+            'emirates_id_image_back'  => 'nullable|image|max:5120',
             'nationality' => 'required|string',
             'area_of_residence' => 'required|string',
             'preferred_language' => 'required|string',
@@ -82,9 +83,14 @@ class RegistrationController extends Controller
             abort(500, 'No active tablets configured in the system.');
         }
 
-        $imagePath = null;
-        if ($request->hasFile('emirates_id_image')) {
-            $imagePath = $request->file('emirates_id_image')->store('', 'emirates_id');
+        $imageFrontPath = null;
+        if ($request->hasFile('emirates_id_image_front')) {
+            $imageFrontPath = $request->file('emirates_id_image_front')->store('', 'emirates_id');
+        }
+        
+        $imageBackPath = null;
+        if ($request->hasFile('emirates_id_image_back')) {
+            $imageBackPath = $request->file('emirates_id_image_back')->store('', 'emirates_id');
         }
 
         $mobileNumber = $request->mobile_code . ltrim($request->mobile_number_local, '0');
@@ -95,8 +101,10 @@ class RegistrationController extends Controller
             'mobile_number' => $mobileNumber,
             'emirates_id_number' => $request->emirates_id_number,
             'emirates_id_hash' => Registration::hashEmiratesId($request->emirates_id_number),
-            'emirates_id_image_path' => $imagePath,
-            'image_uploaded_at' => $imagePath ? now() : null,
+            'emirates_id_image_path' => $imageFrontPath,
+            'image_uploaded_at' => $imageFrontPath ? now() : null,
+            'emirates_id_image_back_path' => $imageBackPath,
+            'image_back_uploaded_at' => $imageBackPath ? now() : null,
             'nationality' => $request->nationality,
             'area_of_residence' => $request->area_of_residence,
             'preferred_language' => $request->preferred_language,
