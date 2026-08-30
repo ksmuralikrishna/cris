@@ -15,20 +15,48 @@ class RegistrationController extends Controller
     public function show(Request $request)
     {
         if (!$request->session()->has('registration_session_id')) {
-            $request->session()->put('registration_session_id', (string) Str::uuid());
+            $request->session()->put(
+                'registration_session_id',
+                (string) Str::uuid()
+            );
         }
+        
+        $nationalities = config('nationalities');
+        $phoneCountryCodes = config('phone_country_codes');
+        $languages = config('languages');
+
+        // Sort nationalities alphabetically
+        asort($nationalities);
+
+        // Sort phone countries alphabetically
+        uasort($phoneCountryCodes, function ($a, $b) {
+            return strcmp($a['name'], $b['name']);
+        });
 
         return view('register.form', [
-            'sessionId' => $request->session()->get('registration_session_id')
+            'sessionId' => $request->session()->get('registration_session_id'),
+            'nationalities' => $nationalities,
+            'phoneCountryCodes' => $phoneCountryCodes,
+            'languages' => $languages,
         ]);
     }
-
     public function store(Request $request)
     {
+        
         $request->validate([
             'full_name' => 'required|string|max:255',
+            // 'mobile_code' => 'required|string',
+            // 'mobile_number_local' => 'required|string|max:20',
+
+            
             'mobile_code' => 'required|string',
-            'mobile_number_local' => 'required|string|max:20',
+            'mobile_number_local' => [
+                'required',
+                'string',
+                'max:20',
+                'regex:/^\d+$/'
+            ],
+
             'emirates_id_number' => ['required', 'string', 'regex:/^784-\d{4}-\d{7}-\d{1}$/'],
             'emirates_id_image' => 'nullable|image|max:5120',
             'nationality' => 'required|string',

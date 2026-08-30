@@ -81,10 +81,9 @@
                             </svg>
                             <div class="flex text-lg text-gray-600 justify-center">
                                 <label for="emirates_id_image" class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-emerald-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary p-1">
-                                    <span>Upload a file</span>
-                                    <input id="emirates_id_image" name="emirates_id_image" type="file" class="sr-only" accept="image/*" onchange="previewImage(this)">
-                                </label>
-                                <p class="pl-1 pt-1">or take a photo</p>
+                                    <span>Take a photo</span>
+                                    <input id="emirates_id_image" name="emirates_id_image" type="file" accept="image/*" capture="environment" onchange="previewImage(this)" style="position:fixed;top:-100px;left:-100px;opacity:0;">                                
+                                    <p class="pl-1 pt-1"></p>
                             </div>
                             <p class="text-sm text-gray-500">Max 5MB</p>
                         </div>
@@ -117,19 +116,20 @@
                 <div>
                     <label class="block text-lg font-medium text-gray-700 mb-2">Mobile Number <span class="text-red-500">*</span></label>
                     <div class="flex">
-                        <select name="mobile_code" class="rounded-l-lg border-gray-300 border-y border-l p-4 text-lg bg-gray-50 focus:ring-primary focus:border-primary outline-none">
-                            <option value="+971" {{ old('mobile_code', '+971') == '+971' ? 'selected' : '' }}>+971 (UAE)</option>
-                            <option value="+91" {{ old('mobile_code') == '+91' ? 'selected' : '' }}>+91 (India)</option>
-                            <option value="+92" {{ old('mobile_code') == '+92' ? 'selected' : '' }}>+92 (Pakistan)</option>
-                            <option value="+63" {{ old('mobile_code') == '+63' ? 'selected' : '' }}>+63 (Philippines)</option>
-                            <option value="+20" {{ old('mobile_code') == '+20' ? 'selected' : '' }}>+20 (Egypt)</option>
-                            <option value="+880" {{ old('mobile_code') == '+880' ? 'selected' : '' }}>+880 (Bangladesh)</option>
-                            <option value="+44" {{ old('mobile_code') == '+44' ? 'selected' : '' }}>+44 (UK)</option>
-                            <option value="+1" {{ old('mobile_code') == '+1' ? 'selected' : '' }}>+1 (USA)</option>
-                            <option value="+962" {{ old('mobile_code') == '+962' ? 'selected' : '' }}>+962 (Jordan)</option>
-                            <option value="+961" {{ old('mobile_code') == '+961' ? 'selected' : '' }}>+961 (Lebanon)</option>
-                        </select>
-                        <input type="tel" name="mobile_number_local" id="mobile_number_local" required value="{{ old('mobile_number_local') }}"
+                    
+                    <select name="mobile_code"
+                        class="rounded-l-lg border-gray-300 border-y border-l p-4 text-lg bg-gray-50 focus:ring-primary focus:border-primary outline-none">
+
+                        @foreach($phoneCountryCodes as $code => $country)
+                            <option value="{{ $country['dial_code'] }}"
+                                {{ old('mobile_code', '+971') == $country['dial_code'] ? 'selected' : '' }}>
+                                {{ $country['dial_code'] }} ({{ $country['name'] }})
+                            </option>
+                        @endforeach
+
+                    </select>
+
+                        <input type="number" name="mobile_number_local" id="mobile_number_local" required value="{{ old('mobile_number_local') }}"
                                class="w-full rounded-r-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary">
                     </div>
                     @error('mobile_number_local') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
@@ -138,7 +138,7 @@
                 <!-- Nationality -->
                 <div>
                     <label for="nationality" class="block text-lg font-medium text-gray-700 mb-2">Nationality <span class="text-red-500">*</span></label>
-                    <select name="nationality" id="nationality" required class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary bg-white">
+                    <!-- <select name="nationality" id="nationality" required class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary bg-white">
                         <option value="">Select Nationality</option>
                         <option value="AE" {{ old('nationality') == 'AE' ? 'selected' : '' }}>United Arab Emirates</option>
                         <option disabled>──────────</option>
@@ -155,7 +155,27 @@
                         <option value="NP" {{ old('nationality') == 'NP' ? 'selected' : '' }}>Nepal</option>
                         <option disabled>──────────</option>
                         <option value="OTHER" {{ old('nationality') == 'OTHER' ? 'selected' : '' }}>Other</option>
+                    </select> -->
+                    
+                    <select name="nationality"
+                        id="nationality"
+                        required
+                        class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary bg-white">
+
+                        <option value="">Select Nationality</option>
+
+                        @foreach($nationalities as $code => $name)
+                            <option value="{{ $code }}"
+                                {{ old('nationality') == $code ? 'selected' : '' }}>
+                                {{ $name }}
+                            </option>
+                        @endforeach
+
                     </select>
+
+
+
+                    
                     @error('nationality') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
@@ -174,13 +194,28 @@
                 <!-- Preferred Language -->
                 <div>
                     <label for="preferred_language" class="block text-lg font-medium text-gray-700 mb-2">Preferred Language <span class="text-red-500">*</span></label>
-                    <select name="preferred_language" id="preferred_language" required class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary bg-white">
+                    <!-- <select name="preferred_language" id="preferred_language" required class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary bg-white">
                         <option value="">Select Language</option>
                         <option value="en" {{ old('preferred_language') == 'en' ? 'selected' : '' }}>English</option>
                         <option value="ar" {{ old('preferred_language') == 'ar' ? 'selected' : '' }}>Arabic</option>
                         <option value="ur" {{ old('preferred_language') == 'ur' ? 'selected' : '' }}>Urdu</option>
                         <option value="hi" {{ old('preferred_language') == 'hi' ? 'selected' : '' }}>Hindi</option>
                         <option value="tl" {{ old('preferred_language') == 'tl' ? 'selected' : '' }}>Filipino</option>
+                    </select> -->
+                    <select
+                        name="preferred_language"
+                        id="preferred_language"
+                        required
+                        class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary bg-white"
+                    >
+                        <option value="">Select Preferred Language</option>
+
+                        @foreach($languages as $code => $language)
+                            <option value="{{ $code }}"
+                                {{ old('preferred_language') == $code ? 'selected' : '' }}>
+                                {{ $language }}
+                            </option>
+                        @endforeach
                     </select>
                     @error('preferred_language') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
@@ -298,6 +333,109 @@
     let isEidDuplicate = false;
     let isCheckingEid = false;
     let lastCheckedEid = '';
+
+    const phoneCountryCodes = @json($phoneCountryCodes);
+
+    const mobileCodeSelect = document.querySelector('select[name="mobile_code"]');
+    const mobileNumberInput = document.querySelector('input[name="mobile_number_local"]');
+
+    function updatePhoneValidation() {
+
+        const selectedCode = mobileCodeSelect.value;
+
+        const country = Object.values(phoneCountryCodes).find(
+            country => country.dial_code === selectedCode
+        );
+
+        if (!country) {
+            return;
+        }
+
+        const maxLength = country.phone_length;
+
+        // Set maximum number of digits
+        mobileNumberInput.maxLength = maxLength;
+
+        // Remove anything that is not a number
+        mobileNumberInput.value = mobileNumberInput.value.replace(/\D/g, '');
+
+        // If existing number is longer than allowed, trim it
+        if (mobileNumberInput.value.length > maxLength) {
+            mobileNumberInput.value =
+                mobileNumberInput.value.substring(0, maxLength);
+        }
+
+        validatePhoneNumber();
+    }
+
+    function validatePhoneNumber() {
+
+        const selectedCode = mobileCodeSelect.value;
+
+        const country = Object.values(phoneCountryCodes).find(
+            country => country.dial_code === selectedCode
+        );
+
+        if (!country) {
+            return;
+        }
+
+        const phone = mobileNumberInput.value;
+
+        // Empty
+        if (phone.length === 0) {
+            mobileNumberInput.setCustomValidity('');
+            return;
+        }
+
+        // Check length
+        if (phone.length < country.phone_length) {
+
+            mobileNumberInput.setCustomValidity(
+                `Please enter ${country.phone_length} digits for ${country.name}.`
+            );
+
+        } else {
+
+            mobileNumberInput.setCustomValidity('');
+        }
+    }
+
+    // Country code changed
+    mobileCodeSelect.addEventListener('change', function () {
+        updatePhoneValidation();
+    });
+
+    // User typing
+    mobileNumberInput.addEventListener('input', function () {
+
+        const selectedCode = mobileCodeSelect.value;
+
+        const country = Object.values(phoneCountryCodes).find(
+            country => country.dial_code === selectedCode
+        );
+
+        if (!country) {
+            return;
+        }
+
+        // Numbers only
+        this.value = this.value.replace(/\D/g, '');
+
+        // Prevent typing more than allowed digits
+        if (this.value.length > country.phone_length) {
+            this.value = this.value.substring(
+                0,
+                country.phone_length
+            );
+        }
+
+        validatePhoneNumber();
+    });
+
+    // Initialize when page loads
+    updatePhoneValidation();
+
 
     function formatEmiratesId(input) {
     // Strip everything except digits
