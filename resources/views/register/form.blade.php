@@ -148,8 +148,7 @@
 
                     </select>
 
-                        <input type="number" name="mobile_number_local" id="mobile_number_local" required value="{{ old('mobile_number_local') }}"
-                               class="w-full rounded-r-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary">
+                        <input type="tel" name="mobile_number_local" id="mobile_number_local" required value="{{ old('mobile_number_local') }}" maxlength="10" class="w-full rounded-r-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary">
                     </div>
                     @error('mobile_number_local') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
@@ -353,6 +352,21 @@
     let isCheckingEid = false;
     let lastCheckedEid = '';
 
+// Searchable dropdowns
+const tomSelectConfig = {
+    controlInput: '<input>',
+    placeholder: 'Search...',
+    maxOptions: null,
+};
+
+new TomSelect('#nationality', tomSelectConfig);
+new TomSelect('#area_of_residence', tomSelectConfig);
+new TomSelect('#preferred_language', tomSelectConfig);
+new TomSelect('select[name="mobile_code"]', {
+    ...tomSelectConfig,
+    maxOptions: null,
+});
+    
     const phoneCountryCodes = @json($phoneCountryCodes);
 
     const mobileCodeSelect = document.querySelector('select[name="mobile_code"]');
@@ -691,31 +705,29 @@
         }
     }
 
-    function previewImage(input) {
-        const preview = document.getElementById('image-preview');
-        const prompt = document.getElementById('upload-prompt');
-        const removeBtn = document.getElementById('remove-image-btn');
-        
+    function previewImage(input, side) {
+    const preview = document.getElementById('image-preview-' + side);
+    const prompt = document.getElementById('upload-prompt-' + side);
+    const removeBtn = document.getElementById('remove-image-btn-' + side);
+
         if (input.files && input.files[0]) {
             const reader = new FileReader();
-            
             reader.onload = function(e) {
                 preview.src = e.target.result;
                 preview.classList.remove('hidden');
                 prompt.classList.add('hidden');
                 removeBtn.classList.remove('hidden');
             }
-            
             reader.readAsDataURL(input.files[0]);
         }
     }
 
-    function removeImage() {
-        const input = document.getElementById('emirates_id_image');
-        const preview = document.getElementById('image-preview');
-        const prompt = document.getElementById('upload-prompt');
-        const removeBtn = document.getElementById('remove-image-btn');
-        
+    function removeImage(side) {
+        const input = document.getElementById('emirates_id_image_' + side);
+        const preview = document.getElementById('image-preview-' + side);
+        const prompt = document.getElementById('upload-prompt-' + side);
+        const removeBtn = document.getElementById('remove-image-btn-' + side);
+
         input.value = '';
         preview.src = '';
         preview.classList.add('hidden');
