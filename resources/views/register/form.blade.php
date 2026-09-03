@@ -131,6 +131,28 @@
                     @error('full_name') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
+                <!-- Nationality -->
+                <div>
+                    <label for="nationality" class="block text-lg font-medium text-gray-700 mb-2">Nationality <span class="text-red-500">*</span></label>
+                    <select name="nationality"
+                        id="nationality"
+                        required
+                        class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary bg-white">
+
+                        <option value="">Select Nationality</option>
+
+                        @foreach($nationalities as $code => $name)
+                            <option value="{{ $code }}"
+                                {{ old('nationality') == $code ? 'selected' : '' }}>
+                                {{ $name }}
+                            </option>
+                        @endforeach
+
+                    </select>
+                    
+                    @error('nationality') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
                 <!-- Mobile Number -->
                 <div>
                     <label class="block text-lg font-medium text-gray-700 mb-2">Mobile Number <span class="text-red-500">*</span></label>
@@ -153,50 +175,6 @@
                     @error('mobile_number_local') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
-                <!-- Nationality -->
-                <div>
-                    <label for="nationality" class="block text-lg font-medium text-gray-700 mb-2">Nationality <span class="text-red-500">*</span></label>
-                    <!-- <select name="nationality" id="nationality" required class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary bg-white">
-                        <option value="">Select Nationality</option>
-                        <option value="AE" {{ old('nationality') == 'AE' ? 'selected' : '' }}>United Arab Emirates</option>
-                        <option disabled>──────────</option>
-                        <option value="IN" {{ old('nationality') == 'IN' ? 'selected' : '' }}>India</option>
-                        <option value="PK" {{ old('nationality') == 'PK' ? 'selected' : '' }}>Pakistan</option>
-                        <option value="PH" {{ old('nationality') == 'PH' ? 'selected' : '' }}>Philippines</option>
-                        <option value="EG" {{ old('nationality') == 'EG' ? 'selected' : '' }}>Egypt</option>
-                        <option value="BD" {{ old('nationality') == 'BD' ? 'selected' : '' }}>Bangladesh</option>
-                        <option value="GB" {{ old('nationality') == 'GB' ? 'selected' : '' }}>United Kingdom</option>
-                        <option value="US" {{ old('nationality') == 'US' ? 'selected' : '' }}>United States</option>
-                        <option value="JO" {{ old('nationality') == 'JO' ? 'selected' : '' }}>Jordan</option>
-                        <option value="LB" {{ old('nationality') == 'LB' ? 'selected' : '' }}>Lebanon</option>
-                        <option value="SY" {{ old('nationality') == 'SY' ? 'selected' : '' }}>Syria</option>
-                        <option value="NP" {{ old('nationality') == 'NP' ? 'selected' : '' }}>Nepal</option>
-                        <option disabled>──────────</option>
-                        <option value="OTHER" {{ old('nationality') == 'OTHER' ? 'selected' : '' }}>Other</option>
-                    </select> -->
-                    
-                    <select name="nationality"
-                        id="nationality"
-                        required
-                        class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary bg-white">
-
-                        <option value="">Select Nationality</option>
-
-                        @foreach($nationalities as $code => $name)
-                            <option value="{{ $code }}"
-                                {{ old('nationality') == $code ? 'selected' : '' }}>
-                                {{ $name }}
-                            </option>
-                        @endforeach
-
-                    </select>
-
-
-
-                    
-                    @error('nationality') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
-                </div>
-
                 <!-- Area of Residence -->
                 <div>
                     <label for="area_of_residence" class="block text-lg font-medium text-gray-700 mb-2">Area of Residence <span class="text-red-500">*</span></label>
@@ -212,14 +190,6 @@
                 <!-- Preferred Language -->
                 <div>
                     <label for="preferred_language" class="block text-lg font-medium text-gray-700 mb-2">Preferred Language <span class="text-red-500">*</span></label>
-                    <!-- <select name="preferred_language" id="preferred_language" required class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary bg-white">
-                        <option value="">Select Language</option>
-                        <option value="en" {{ old('preferred_language') == 'en' ? 'selected' : '' }}>English</option>
-                        <option value="ar" {{ old('preferred_language') == 'ar' ? 'selected' : '' }}>Arabic</option>
-                        <option value="ur" {{ old('preferred_language') == 'ur' ? 'selected' : '' }}>Urdu</option>
-                        <option value="hi" {{ old('preferred_language') == 'hi' ? 'selected' : '' }}>Hindi</option>
-                        <option value="tl" {{ old('preferred_language') == 'tl' ? 'selected' : '' }}>Filipino</option>
-                    </select> -->
                     <select
                         name="preferred_language"
                         id="preferred_language"
