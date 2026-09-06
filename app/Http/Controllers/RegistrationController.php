@@ -61,8 +61,13 @@ class RegistrationController extends Controller
             'emirates_id_image_front' => 'nullable|image|max:5120',
             'emirates_id_image_back'  => 'nullable|image|max:5120',
             'nationality' => 'required|string',
+            'nationality_other' => 'nullable|required_if:nationality,Other|string|max:100',
+
             'area_of_residence' => 'required|string',
+            'area_of_residence_other' => 'nullable|required_if:area_of_residence,Other|string|max:100',
+
             'preferred_language' => 'required|string',
+            'preferred_language_other' => 'nullable|required_if:preferred_language,Other|string|max:100',
             'terms_consent' => 'required|accepted',
             'privacy_consent' => 'required|accepted',
             'session_id' => 'required|uuid',
@@ -92,19 +97,36 @@ class RegistrationController extends Controller
 
         $mobileNumber = $request->mobile_code . ltrim($request->mobile_number_local, '0');
 
+        $nationality = $request->nationality === 'Other'
+        ? trim($request->nationality_other)
+        : $request->nationality;
+
+        $areaOfResidence = $request->area_of_residence === 'Other'
+            ? trim($request->area_of_residence_other)
+            : $request->area_of_residence;
+
+        $preferredLanguage = $request->preferred_language === 'Other'
+            ? trim($request->preferred_language_other)
+            : $request->preferred_language;
+
         $registration = Registration::create([
             'tablet_id' => $tablet->id,
             'full_name' => $request->full_name,
             'mobile_number' => $mobileNumber,
+
             'emirates_id_number' => $request->emirates_id_number,
             'emirates_id_hash' => Registration::hashEmiratesId($request->emirates_id_number),
+
             'emirates_id_image_path' => $imageFrontPath,
             'image_uploaded_at' => $imageFrontPath ? now() : null,
+
             'emirates_id_image_back_path' => $imageBackPath,
             'image_back_uploaded_at' => $imageBackPath ? now() : null,
-            'nationality' => $request->nationality,
-            'area_of_residence' => $request->area_of_residence,
-            'preferred_language' => $request->preferred_language,
+
+            'nationality' => $nationality,
+            'area_of_residence' => $areaOfResidence,
+            'preferred_language' => $preferredLanguage,
+
             'date_of_birth' => $request->date_of_birth,
             'session_id' => $request->session_id,
             'submitted_at' => now(),
