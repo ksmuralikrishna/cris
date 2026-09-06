@@ -178,6 +178,7 @@
                     @enderror
                 </div>
 
+                
                 <!-- Mobile Number -->
                 <div>
                     <label class="block text-lg font-medium text-gray-700 mb-2">Mobile Number <span class="text-red-500">*</span></label>
@@ -233,23 +234,7 @@
                     @error('preferred_language') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
-                <!-- Age Group -->
-                <div class ='hidden'>
-                    <label class="block text-lg font-medium text-gray-700 mb-3">Age Group <span class="text-red-500">*</span></label>
-                    <div class="grid grid-cols-2 gap-4">
-                        @foreach(['under_18' => 'Under 18', '18_24' => '18-24', '25_34' => '25-34', '35_44' => '35-44', '45_54' => '45-54', '55_plus' => '55+'] as $val => $label)
-                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50 {{ old('age_group') == $val ? 'border-primary bg-green-50' : 'border-gray-300' }}">
-                            <input type="radio" name="age_group" value="{{ $val }}"  class="w-6 h-6 text-primary border-gray-300 focus:ring-primary" {{ old('age_group') == $val ? 'checked' : '' }}> 
-                            <!-- onchange="checkAgeGroup(this)" -->
-                            <span class="ml-3 text-lg">{{ $label }}</span>
-                        </label>
-                        @endforeach
-                    </div>
-                    <div id="under_18_error" class="hidden mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 font-medium">
-                        Sorry, you must be 18 or older to register.
-                    </div>
-                    @error('age_group') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
-                </div>
+                
             </div>
 
             <div class="mt-8 flex justify-between">
@@ -520,21 +505,6 @@ new TomSelect('select[name="mobile_code"]', {
         @endif
     });
 
-    function checkAgeGroup(radio) {
-        const errorDiv = document.getElementById('under_18_error');
-        const nextBtn = document.getElementById('btn-step-2'); // Now btn-step-2 is for Personal Info
-        
-        if (radio.value === 'under_18') {
-            errorDiv.classList.remove('hidden');
-            nextBtn.disabled = true;
-            nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        } else {
-            errorDiv.classList.add('hidden');
-            nextBtn.disabled = false;
-            nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-        }
-    }
-
     function updateSummary() {
         document.getElementById('summary_name').textContent = document.getElementById('full_name').value || '-';
         document.getElementById('summary_mobile').textContent = document.querySelector('select[name="mobile_code"]').value + document.getElementById('mobile_number_local').value;
@@ -676,21 +646,24 @@ new TomSelect('select[name="mobile_code"]', {
     }
 
     function goToStep3() {
-        const name = document.getElementById('full_name').value;
-        const mobile = document.getElementById('mobile_number_local').value;
-        const nat = document.getElementById('nationality').value;
-        const dob = document.getElementById('date_of_birth').value;
-        const area = document.getElementById('area_of_residence').value;
-        const lang = document.getElementById('preferred_language').value;
-        // const ageChecked = document.querySelector('input[name="age_group"]:checked');
-        
-        if(!name || !mobile || !nat || !dob || !area || !lang) {
-            document.getElementById('registrationForm').reportValidity();
-            return;
-        }
+    const name   = document.getElementById('full_name').value;
+    const mobile = document.getElementById('mobile_number_local').value;
+    const nat    = document.getElementById('nationality').value;
+    const area   = document.getElementById('area_of_residence').value;
+    const lang   = document.getElementById('preferred_language').value;
+    const dob    = document.getElementById('date_of_birth').value;
 
-        nextStep(3);
+    if (!name || !mobile || !nat || !area || !lang || !dob) {
+        document.getElementById('registrationForm').reportValidity();
+        if (!dob) {
+            document.getElementById('dob-display').style.color = '#dc2626';
+            document.getElementById('dob_age_error').classList.remove('hidden');
+            document.getElementById('dob_age_error').textContent = 'Please select your date of birth.';
+        }
+        return;
     }
+    nextStep(3);
+}
 
     function validateEmiratesId(input) {
         const val = input.value.trim();

@@ -28,7 +28,7 @@ class Registration extends Model
         'nationality',
         'area_of_residence',
         'preferred_language',
-        'age_group',
+        'date_of_birth',
         'session_id',
         'submitted_at',
     ];
@@ -36,6 +36,7 @@ class Registration extends Model
     protected $casts = [
         'submitted_at' => 'datetime',
         'image_uploaded_at' => 'datetime',
+        'date_of_birth' => 'date',
     ];
 
     protected $hidden = [

@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('nationality');
             $table->string('area_of_residence');
             $table->string('preferred_language');
-            $table->enum('age_group', ['under_18', '18_24', '25_34', '35_44', '45_54', '55_plus']);
+            $table->date('date_of_birth')->nullable();
             $table->uuid('session_id');
             $table->timestamp('submitted_at');
             $table->timestamps();
