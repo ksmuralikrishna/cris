@@ -3,6 +3,25 @@
 @section('title', 'Welcome - Registration')
 
 @section('content')
+<style>
+.dob-drum {
+    position: absolute; left: 0; right: 0; top: 0;
+    cursor: grab; user-select: none; touch-action: none;
+}
+.dob-drum.grabbing { cursor: grabbing; }
+.dob-drum-item {
+    height: 52px; display: flex; align-items: center; justify-content: center;
+    font-size: 1.25rem; font-weight: 600; color: #9ca3af;
+    transition: color 0.15s, font-size 0.15s; padding: 0 4px; white-space: nowrap;
+}
+.dob-drum-item.selected { color: #065f46; font-size: 1.45rem; }
+.dob-drum-item.near { color: #374151; font-size: 1.3rem; }
+.dob-drum-wrap::before, .dob-drum-wrap::after {
+    content: ''; position: absolute; left: 0; right: 0; height: 56px; z-index: 11; pointer-events: none;
+}
+.dob-drum-wrap::before { top: 0; background: linear-gradient(to bottom, rgba(249,250,251,0.95) 0%, transparent 100%); }
+.dob-drum-wrap::after  { bottom: 0; background: linear-gradient(to top,   rgba(249,250,251,0.95) 0%, transparent 100%); }
+</style>
 <div class="bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto overflow-hidden">
     <!-- Header / Progress -->
     <div class="bg-gray-50 border-b p-6">
@@ -154,7 +173,7 @@
                 </div>
 
                 <!-- Date of Birth -->
-                <div>
+                <!-- <div>
                     <label for="date_of_birth" class="block text-lg font-medium text-gray-700 mb-2">
                         Date of Birth <span class="text-red-500">*</span>
                     </label>
@@ -172,6 +191,53 @@
                     <p class="mt-2 text-sm text-gray-500">
                         Select your date of birth
                     </p>
+
+                    @error('date_of_birth')
+                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div> -->
+
+                <!-- Date of Birth -->
+                <div>
+                    <label class="block text-lg font-medium text-gray-700 mb-3">
+                        Date of Birth <span class="text-red-500">*</span>
+                    </label>
+
+                    <input type="hidden" name="date_of_birth" id="date_of_birth" value="{{ old('date_of_birth') }}">
+
+                    <div class="dob-picker flex gap-3 items-stretch select-none">
+                        <!-- Day -->
+                        <div class="flex-1 flex flex-col items-center">
+                            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Day</span>
+                            <div class="dob-drum-wrap relative overflow-hidden rounded-xl border-2 border-gray-200 bg-gray-50 w-full" style="height:180px;">
+                                <div class="dob-drum" id="drum-day" data-type="day"></div>
+                                <div class="pointer-events-none absolute left-0 right-0 rounded-lg" style="top:50%;transform:translateY(-50%);height:52px;background:rgba(16,185,129,0.12);border-top:2px solid #10b981;border-bottom:2px solid #10b981;z-index:10;"></div>
+                            </div>
+                        </div>
+                        <!-- Month -->
+                        <div class="flex-1 flex flex-col items-center">
+                            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Month</span>
+                            <div class="dob-drum-wrap relative overflow-hidden rounded-xl border-2 border-gray-200 bg-gray-50 w-full" style="height:180px;">
+                                <div class="dob-drum" id="drum-month" data-type="month"></div>
+                                <div class="pointer-events-none absolute left-0 right-0 rounded-lg" style="top:50%;transform:translateY(-50%);height:52px;background:rgba(16,185,129,0.12);border-top:2px solid #10b981;border-bottom:2px solid #10b981;z-index:10;"></div>
+                            </div>
+                        </div>
+                        <!-- Year -->
+                        <div class="flex-1 flex flex-col items-center">
+                            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Year</span>
+                            <div class="dob-drum-wrap relative overflow-hidden rounded-xl border-2 border-gray-200 bg-gray-50 w-full" style="height:180px;">
+                                <div class="dob-drum" id="drum-year" data-type="year"></div>
+                                <div class="pointer-events-none absolute left-0 right-0 rounded-lg" style="top:50%;transform:translateY(-50%);height:52px;background:rgba(16,185,129,0.12);border-top:2px solid #10b981;border-bottom:2px solid #10b981;z-index:10;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 text-center">
+                        <span id="dob-display" class="text-base font-medium text-gray-600">Select your date of birth</span>
+                    </div>
+                    <div id="dob_age_error" class="hidden mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 font-medium text-sm">
+                        You must be 18 or older to register.
+                    </div>
 
                     @error('date_of_birth')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -233,23 +299,7 @@
                     @error('preferred_language') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
-                <!-- Age Group -->
-                <div class ='hidden'>
-                    <label class="block text-lg font-medium text-gray-700 mb-3">Age Group <span class="text-red-500">*</span></label>
-                    <div class="grid grid-cols-2 gap-4">
-                        @foreach(['under_18' => 'Under 18', '18_24' => '18-24', '25_34' => '25-34', '35_44' => '35-44', '45_54' => '45-54', '55_plus' => '55+'] as $val => $label)
-                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50 {{ old('age_group') == $val ? 'border-primary bg-green-50' : 'border-gray-300' }}">
-                            <input type="radio" name="age_group" value="{{ $val }}"  class="w-6 h-6 text-primary border-gray-300 focus:ring-primary" {{ old('age_group') == $val ? 'checked' : '' }}> 
-                            <!-- onchange="checkAgeGroup(this)" -->
-                            <span class="ml-3 text-lg">{{ $label }}</span>
-                        </label>
-                        @endforeach
-                    </div>
-                    <div id="under_18_error" class="hidden mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 font-medium">
-                        Sorry, you must be 18 or older to register.
-                    </div>
-                    @error('age_group') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
-                </div>
+                
             </div>
 
             <div class="mt-8 flex justify-between">
@@ -520,21 +570,6 @@ new TomSelect('select[name="mobile_code"]', {
         @endif
     });
 
-    function checkAgeGroup(radio) {
-        const errorDiv = document.getElementById('under_18_error');
-        const nextBtn = document.getElementById('btn-step-2'); // Now btn-step-2 is for Personal Info
-        
-        if (radio.value === 'under_18') {
-            errorDiv.classList.remove('hidden');
-            nextBtn.disabled = true;
-            nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        } else {
-            errorDiv.classList.add('hidden');
-            nextBtn.disabled = false;
-            nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-        }
-    }
-
     function updateSummary() {
         document.getElementById('summary_name').textContent = document.getElementById('full_name').value || '-';
         document.getElementById('summary_mobile').textContent = document.querySelector('select[name="mobile_code"]').value + document.getElementById('mobile_number_local').value;
@@ -676,19 +711,22 @@ new TomSelect('select[name="mobile_code"]', {
     }
 
     function goToStep3() {
-        const name = document.getElementById('full_name').value;
+        const name   = document.getElementById('full_name').value;
         const mobile = document.getElementById('mobile_number_local').value;
-        const nat = document.getElementById('nationality').value;
-        const dob = document.getElementById('date_of_birth').value;
-        const area = document.getElementById('area_of_residence').value;
-        const lang = document.getElementById('preferred_language').value;
-        // const ageChecked = document.querySelector('input[name="age_group"]:checked');
-        
-        if(!name || !mobile || !nat || !dob || !area || !lang) {
+        const nat    = document.getElementById('nationality').value;
+        const area   = document.getElementById('area_of_residence').value;
+        const lang   = document.getElementById('preferred_language').value;
+        const dob    = document.getElementById('date_of_birth').value;
+
+        if (!name || !mobile || !nat || !area || !lang || !dob) {
             document.getElementById('registrationForm').reportValidity();
+            if (!dob) {
+                document.getElementById('dob-display').style.color = '#dc2626';
+                document.getElementById('dob_age_error').classList.remove('hidden');
+                document.getElementById('dob_age_error').textContent = 'Please select your date of birth.';
+            }
             return;
         }
-
         nextStep(3);
     }
 
@@ -730,5 +768,135 @@ new TomSelect('select[name="mobile_code"]', {
         prompt.classList.remove('hidden');
         removeBtn.classList.add('hidden');
     }
+
+    // ── DOB Drum Picker ────────────────────────────────────────────────────────
+(function () {
+    const ITEM_H = 52, PAD = 3;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const state = { day: null, month: null, year: null };
+
+    function buildItems(type) {
+        if (type === 'day')   return Array.from({length:31}, (_,i) => String(i+1).padStart(2,'0'));
+        if (type === 'month') return months;
+        if (type === 'year')  {
+            const max = new Date().getFullYear() - 18;
+            return Array.from({length:100}, (_,i) => String(max - i));
+        }
+    }
+
+    function initDrum(drumEl) {
+        const type = drumEl.dataset.type;
+        const items = buildItems(type);
+        const wrap  = drumEl.parentElement;
+        const wrapH = 180;
+        const padded = [...Array(PAD).fill(null), ...items, ...Array(PAD).fill(null)];
+
+        drumEl.style.height = padded.length * ITEM_H + 'px';
+        padded.forEach((val, i) => {
+            const div = document.createElement('div');
+            div.className = 'dob-drum-item';
+            div.textContent = val || '';
+            div.dataset.index = i;
+            div.dataset.val   = val || '';
+            drumEl.appendChild(div);
+        });
+
+        let currentIndex = PAD, offsetY = 0;
+
+        const getOffset  = idx => wrapH / 2 - (idx * ITEM_H + ITEM_H / 2);
+        const clamp      = idx => Math.max(PAD, Math.min(items.length - 1 + PAD, idx));
+
+        function updateItems(idx) {
+            drumEl.querySelectorAll('.dob-drum-item').forEach((el, i) => {
+                el.classList.remove('selected','near');
+                const d = Math.abs(i - idx);
+                if (d === 0) el.classList.add('selected');
+                else if (d === 1) el.classList.add('near');
+            });
+        }
+
+        function applyOffset(y, animate) {
+            drumEl.style.transition = animate ? 'transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94)' : 'none';
+            drumEl.style.transform  = `translateY(${y}px)`;
+        }
+
+        function snapToIndex(idx, animate = true) {
+            currentIndex = clamp(idx);
+            offsetY = getOffset(currentIndex);
+            applyOffset(offsetY, animate);
+            updateItems(currentIndex);
+            state[type] = items[currentIndex - PAD];
+            updateHidden();
+        }
+
+        // Restore old() value on server validation failure
+        const oldVal = document.getElementById('date_of_birth').value;
+        if (oldVal) {
+            const [y, m, d] = oldVal.split('-');
+            if (type === 'day')   { const i = items.indexOf(d);              if (i > -1) snapToIndex(i + PAD, false); }
+            if (type === 'month') { const i = items.indexOf(months[+m - 1]); if (i > -1) snapToIndex(i + PAD, false); }
+            if (type === 'year')  { const i = items.indexOf(y);              if (i > -1) snapToIndex(i + PAD, false); }
+        } else {
+            snapToIndex(currentIndex, false);
+        }
+
+        let startY = 0, startOffset = 0, isDragging = false, lastY = 0, velY = 0, lastT = 0;
+
+        const onStart = y => { isDragging = true; startY = y; startOffset = offsetY; lastY = y; velY = 0; lastT = Date.now(); drumEl.classList.add('grabbing'); drumEl.style.transition = 'none'; };
+        const onMove  = y => { if (!isDragging) return; const now = Date.now(); velY = (y - lastY) / Math.max(1, now - lastT); lastY = y; lastT = now; offsetY = startOffset + (y - startY); applyOffset(offsetY, false); };
+        const onEnd   = () => { if (!isDragging) return; isDragging = false; drumEl.classList.remove('grabbing'); const raw = -(offsetY + velY * 80 - wrapH / 2 + ITEM_H / 2) / ITEM_H; snapToIndex(Math.round(raw)); };
+
+        wrap.addEventListener('touchstart', e => onStart(e.touches[0].clientY), {passive:true});
+        wrap.addEventListener('touchmove',  e => { e.preventDefault(); onMove(e.touches[0].clientY); }, {passive:false});
+        wrap.addEventListener('touchend',   onEnd);
+        wrap.addEventListener('mousedown',  e => { onStart(e.clientY); e.preventDefault(); });
+        window.addEventListener('mousemove', e => { if (isDragging) onMove(e.clientY); });
+        window.addEventListener('mouseup',   () => { if (isDragging) onEnd(); });
+        wrap.addEventListener('wheel', e => { e.preventDefault(); snapToIndex(currentIndex + (e.deltaY > 0 ? 1 : -1)); }, {passive:false});
+        drumEl.addEventListener('click', e => { const item = e.target.closest('.dob-drum-item'); if (item?.dataset.val) snapToIndex(+item.dataset.index); });
+    }
+
+    function updateHidden() {
+        const { day, month, year } = state;
+        const hidden  = document.getElementById('date_of_birth');
+        const display = document.getElementById('dob-display');
+        const ageErr  = document.getElementById('dob_age_error');
+        const nextBtn = document.getElementById('btn-step-2');
+
+        if (day && month && year) {
+            const mIdx   = months.indexOf(month);
+            const dateObj = new Date(+year, mIdx, +day);
+            const iso     = `${year}-${String(mIdx+1).padStart(2,'0')}-${day}`;
+
+            const today = new Date();
+            let age = today.getFullYear() - dateObj.getFullYear();
+            const m = today.getMonth() - dateObj.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dateObj.getDate())) age--;
+
+            if (age < 18) {
+                hidden.value = '';
+                display.textContent = `${day} ${month} ${year}`;
+                display.style.color = '#dc2626';
+                ageErr.textContent  = 'You must be 18 or older to register.';
+                ageErr.classList.remove('hidden');
+                nextBtn.disabled = true;
+                nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                hidden.value = iso;
+                display.textContent = `${day} ${month} ${year}`;
+                display.style.color = '';
+                ageErr.classList.add('hidden');
+                nextBtn.disabled = false;
+                nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        } else {
+            hidden.value = '';
+            display.textContent = 'Select your date of birth';
+        }
+    }
+
+    document.querySelectorAll('.dob-drum').forEach(initDrum);
+})();
+// ── End DOB Drum Picker ────────────────────────────────────────────────────
 </script>
 @endsection

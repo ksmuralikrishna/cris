@@ -69,9 +69,6 @@ class RegistrationController extends Controller
             'date_of_birth' => 'required|date|before:-18 years'
         ]);
 
-        if ($request->age_group === 'under_18') {
-            return back()->withInput()->withErrors(['age_group' => 'You must be at least 18 years old to register.']);
-        }
 
         if (Registration::isDuplicate($request->emirates_id_number)) {
             return redirect()->route('register.duplicate');
@@ -108,7 +105,7 @@ class RegistrationController extends Controller
             'nationality' => $request->nationality,
             'area_of_residence' => $request->area_of_residence,
             'preferred_language' => $request->preferred_language,
-            'age_group' => $request->age_group,
+            'date_of_birth' => $request->date_of_birth,
             'session_id' => $request->session_id,
             'submitted_at' => now(),
         ]);

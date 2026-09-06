@@ -52,7 +52,7 @@ class DatabaseSeeder extends Seeder
         $nationalities = ['AE', 'IN', 'PK', 'PH', 'EG', 'BD', 'GB', 'US', 'JO', 'LB'];
         $areas = ['Downtown Dubai', 'Deira', 'Bur Dubai', 'JBR', 'Marina', 'Jumeirah', 'Al Quoz', 'Mirdif', 'Al Barsha', 'Silicon Oasis'];
         $languages = ['en' => 40, 'ar' => 30, 'ur' => 15, 'hi' => 10, 'tl' => 5];
-        $ageGroups = ['18_24', '25_34', '35_44', '45_54', '55_plus'];
+        // $ageGroups = ['18_24', '25_34', '35_44', '45_54', '55_plus'];
 
         for ($i = 0; $i < 60; $i++) {
             $tablet = $tablets[array_rand($tablets)];
@@ -88,7 +88,7 @@ class DatabaseSeeder extends Seeder
                 'nationality' => $nationalities[array_rand($nationalities)],
                 'area_of_residence' => $areas[array_rand($areas)],
                 'preferred_language' => $selectedLanguage,
-                'age_group' => $ageGroups[array_rand($ageGroups)],
+                // 'age_group' => $ageGroups[array_rand($ageGroups)],
                 'session_id' => Str::uuid(),
                 'submitted_at' => $submittedAt,
             ]);
