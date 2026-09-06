@@ -153,6 +153,31 @@
                     @error('nationality') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
+                <!-- Date of Birth -->
+                <div>
+                    <label for="date_of_birth" class="block text-lg font-medium text-gray-700 mb-2">
+                        Date of Birth <span class="text-red-500">*</span>
+                    </label>
+
+                    <input
+                        type="date"
+                        name="date_of_birth"
+                        id="date_of_birth"
+                        required
+                        value="{{ old('date_of_birth') }}"
+                        max="{{ date('Y-m-d') }}"
+                        class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary bg-white"
+                    >
+
+                    <p class="mt-2 text-sm text-gray-500">
+                        Select your date of birth
+                    </p>
+
+                    @error('date_of_birth')
+                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <!-- Mobile Number -->
                 <div>
                     <label class="block text-lg font-medium text-gray-700 mb-2">Mobile Number <span class="text-red-500">*</span></label>
@@ -209,12 +234,12 @@
                 </div>
 
                 <!-- Age Group -->
-                <div>
+                <div class ='hidden'>
                     <label class="block text-lg font-medium text-gray-700 mb-3">Age Group <span class="text-red-500">*</span></label>
                     <div class="grid grid-cols-2 gap-4">
                         @foreach(['under_18' => 'Under 18', '18_24' => '18-24', '25_34' => '25-34', '35_44' => '35-44', '45_54' => '45-54', '55_plus' => '55+'] as $val => $label)
                         <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50 {{ old('age_group') == $val ? 'border-primary bg-green-50' : 'border-gray-300' }}">
-                            <input type="radio" name="age_group" value="{{ $val }}" required class="w-6 h-6 text-primary border-gray-300 focus:ring-primary" {{ old('age_group') == $val ? 'checked' : '' }}> 
+                            <input type="radio" name="age_group" value="{{ $val }}"  class="w-6 h-6 text-primary border-gray-300 focus:ring-primary" {{ old('age_group') == $val ? 'checked' : '' }}> 
                             <!-- onchange="checkAgeGroup(this)" -->
                             <span class="ml-3 text-lg">{{ $label }}</span>
                         </label>
@@ -488,7 +513,7 @@ new TomSelect('select[name="mobile_code"]', {
         // Show error step if validation failed on a specific step
         @if($errors->has('terms_consent') || $errors->has('privacy_consent'))
             nextStep(3);
-        @elseif($errors->has('full_name') || $errors->has('mobile_number_local') || $errors->has('nationality') || $errors->has('area_of_residence') || $errors->has('preferred_language') || $errors->has('age_group'))
+        @elseif($errors->has('full_name') || $errors->has('mobile_number_local') || $errors->has('nationality') || $errors->has('area_of_residence') || $errors->has('preferred_language') || $errors->has('date_of_birth'))
             nextStep(2);
         @else
             nextStep(1); // Default to Emirates ID step
@@ -654,11 +679,12 @@ new TomSelect('select[name="mobile_code"]', {
         const name = document.getElementById('full_name').value;
         const mobile = document.getElementById('mobile_number_local').value;
         const nat = document.getElementById('nationality').value;
+        const dob = document.getElementById('date_of_birth').value;
         const area = document.getElementById('area_of_residence').value;
         const lang = document.getElementById('preferred_language').value;
-        const ageChecked = document.querySelector('input[name="age_group"]:checked');
+        // const ageChecked = document.querySelector('input[name="age_group"]:checked');
         
-        if(!name || !mobile || !nat || !area || !lang || !ageChecked) {
+        if(!name || !mobile || !nat || !dob || !area || !lang) {
             document.getElementById('registrationForm').reportValidity();
             return;
         }

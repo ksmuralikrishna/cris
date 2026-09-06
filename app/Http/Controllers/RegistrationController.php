@@ -63,10 +63,10 @@ class RegistrationController extends Controller
             'nationality' => 'required|string',
             'area_of_residence' => 'required|string',
             'preferred_language' => 'required|string',
-            'age_group' => 'required|string|in:under_18,18_24,25_34,35_44,45_54,55_plus',
             'terms_consent' => 'required|accepted',
             'privacy_consent' => 'required|accepted',
-            'session_id' => 'required|uuid'
+            'session_id' => 'required|uuid',
+            'date_of_birth' => 'required|date|before:-18 years'
         ]);
 
         if ($request->age_group === 'under_18') {
