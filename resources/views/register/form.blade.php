@@ -75,22 +75,59 @@
                     <label class="block text-lg font-medium text-gray-700 mb-4">Emirates ID Images <span class="text-gray-400 font-normal">(Optional)</span></label>
 
                     <div class="space-y-4">
-                        <!-- Front Side -->
+                        <!-- Front Side (OCR-enabled) -->
                         <div>
                             <p class="text-sm font-medium text-gray-600 mb-2">Front Side</p>
-                            <input id="emirates_id_image_front" name="emirates_id_image_front" type="file" accept="image/*" capture="environment" onchange="previewImage(this, 'front')" style="position:fixed;top:-100px;left:-100px;opacity:0;">
-                            <div class="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="document.getElementById('emirates_id_image_front').click()">
+                            <input id="emirates_id_image_front" name="emirates_id_image_front" type="file" accept="image/*" capture="environment"
+                                onchange="handleFrontImageCapture(this)"
+                                style="position:fixed;top:-100px;left:-100px;opacity:0;">
+
+                            <!-- Capture card -->
+                            <div class="relative flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg bg-gray-50 hover:bg-gray-100 transition cursor-pointer"
+                                id="front-card"
+                                onclick="document.getElementById('emirates_id_image_front').click()">
+
+                                <!-- Upload prompt -->
                                 <div class="space-y-1 text-center" id="upload-prompt-front">
                                     <svg class="mx-auto h-10 w-10 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                                     <p class="text-primary font-medium">Tap to capture front</p>
-                                    <p class="text-sm text-gray-500">Max 5MB</p>
+                                    <p class="text-sm text-gray-500">OCR will autofill the form &middot; Max 5MB</p>
                                 </div>
+
+                                <!-- Image preview -->
                                 <img id="image-preview-front" class="hidden max-h-48 rounded mx-auto" />
+
+                                <!-- OCR Loading overlay (sits inside the card, non-clickable passthrough) -->
+                                <div id="ocr-overlay" class="hidden absolute inset-0 bg-white/90 rounded-lg flex flex-col items-center justify-center z-10 pointer-events-none">
+                                    <!-- Spinner -->
+                                    <svg class="animate-spin h-10 w-10 text-primary mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                    </svg>
+                                    <p id="ocr-status-text" class="text-sm font-semibold text-gray-700 mb-2">Scanning ID card…</p>
+                                    <!-- Progress bar -->
+                                    <div class="w-48 bg-gray-200 rounded-full h-2">
+                                        <div id="ocr-progress-bar" class="bg-primary h-2 rounded-full transition-all duration-300" style="width:0%"></div>
+                                    </div>
+                                    <p id="ocr-progress-pct" class="text-xs text-gray-500 mt-1">0%</p>
+                                </div>
                             </div>
-                            <div id="remove-image-btn-front" class="hidden mt-2 text-center">
+
+                            <!-- Controls below the card -->
+                            <div id="remove-image-btn-front" class="hidden mt-2 flex items-center justify-between">
                                 <button type="button" class="text-red-500 font-medium" onclick="removeImage('front')">Remove image</button>
+                                <button type="button" id="rescan-btn"
+                                    class="text-primary font-medium flex items-center gap-1"
+                                    onclick="document.getElementById('emirates_id_image_front').click()">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                    Re-scan
+                                </button>
                             </div>
+
+                            <!-- OCR result banner -->
+                            <div id="ocr-result-banner" class="hidden mt-3 rounded-lg border p-3 text-sm"></div>
                         </div>
+
 
                         <!-- Back Side -->
                         <div>
@@ -702,6 +739,417 @@ new TomSelect('select[name="mobile_code"]', {
         preview.classList.add('hidden');
         prompt.classList.remove('hidden');
         removeBtn.classList.add('hidden');
+
+        // When front is removed, also hide the OCR result banner
+        if (side === 'front') {
+            document.getElementById('ocr-result-banner').classList.add('hidden');
+        }
+    }
+
+    // =========================================================================
+    // EMIRATES ID OCR — Tesseract.js (fully client-side, no server upload)
+    // =========================================================================
+
+    /**
+     * Preprocess an image File for better OCR accuracy:
+     *   - Draw to an off-screen canvas
+     *   - Convert RGB → greyscale
+     *   - Apply contrast stretching to push pixels toward black/white
+     * Returns a Promise<Blob> of the processed PNG.
+     */
+    function preprocessImageForOCR(file) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+            img.onload = () => {
+                const MAX_DIM = 2000; // limit for performance, still ample for OCR
+                let { width, height } = img;
+
+                // Scale down if very large
+                if (width > MAX_DIM || height > MAX_DIM) {
+                    const ratio = Math.min(MAX_DIM / width, MAX_DIM / height);
+                    width  = Math.round(width  * ratio);
+                    height = Math.round(height * ratio);
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width  = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+
+                // Draw original image
+                ctx.drawImage(img, 0, 0, width, height);
+                URL.revokeObjectURL(url);
+
+                // Get pixel data
+                const imageData = ctx.getImageData(0, 0, width, height);
+                const data = imageData.data;
+
+                // Pass 1: greyscale + gather min/max for contrast stretch
+                const grey = new Uint8Array(width * height);
+                let minG = 255, maxG = 0;
+                for (let i = 0; i < data.length; i += 4) {
+                    const g = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+                    grey[i >> 2] = g;
+                    if (g < minG) minG = g;
+                    if (g > maxG) maxG = g;
+                }
+
+                // Pass 2: contrast stretch → write back to RGBA
+                const range = maxG - minG || 1;
+                for (let j = 0; j < grey.length; j++) {
+                    const stretched = Math.round(((grey[j] - minG) / range) * 255);
+                    data[j * 4]     = stretched; // R
+                    data[j * 4 + 1] = stretched; // G
+                    data[j * 4 + 2] = stretched; // B
+                    // Alpha unchanged
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+
+                canvas.toBlob(blob => {
+                    if (blob) resolve(blob);
+                    else reject(new Error('Canvas toBlob failed'));
+                }, 'image/png');
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(url);
+                reject(new Error('Image load failed'));
+            };
+            img.src = url;
+        });
+    }
+
+    /**
+     * Run OCR via Tesseract.js on the given Blob and report progress.
+     * Returns the raw text string.
+     */
+    async function runTesseract(blob) {
+        const worker = await Tesseract.createWorker('eng', 1, {
+            logger: (m) => {
+                if (m.status === 'recognizing text') {
+                    const pct = Math.round((m.progress || 0) * 100);
+                    document.getElementById('ocr-progress-bar').style.width = pct + '%';
+                    document.getElementById('ocr-progress-pct').textContent   = pct + '%';
+                    document.getElementById('ocr-status-text').textContent    =
+                        pct < 50 ? 'Reading card…' : 'Extracting text…';
+                } else if (m.status === 'loading language traineddata') {
+                    document.getElementById('ocr-status-text').textContent = 'Loading OCR engine…';
+                } else if (m.status === 'initializing api') {
+                    document.getElementById('ocr-status-text').textContent = 'Initialising…';
+                }
+            }
+        });
+
+        // Tune Tesseract parameters for ID cards
+        await worker.setParameters({
+            tessedit_pageseg_mode: Tesseract.PSM.AUTO,          // automatic page layout
+            preserve_interword_spaces: '1',
+        });
+
+        const { data: { text } } = await worker.recognize(blob);
+        await worker.terminate();
+        return text;
+    }
+
+    /**
+     * Parse the raw OCR text and extract the four Emirates ID fields.
+     * Returns an object: { emiratesId, fullName, dob, nationality }
+     * Each value is a string or null if not found.
+     */
+    function extractEmiratesIdFields(ocrText) {
+        const text = ocrText;
+
+        // ── Emirates ID Number ──────────────────────────────────────────────
+        // Handles OCR spacing/dash artifacts: 784 2005 1234567 3 → 784-2005-1234567-3
+        let emiratesId = null;
+        const eidPatterns = [
+            /784[-\s]?\d{4}[-\s]?\d{7}[-\s]?\d{1}/,               // compact
+            /784[-\s]?\d{4}[-\s]?\d{7}[-\s]?\d{1}/i,
+        ];
+        for (const pat of eidPatterns) {
+            const m = text.match(pat);
+            if (m) {
+                // Normalise to 784-YYYY-NNNNNNN-C
+                const digits = m[0].replace(/\D/g, '');
+                if (digits.length === 15) {
+                    emiratesId = `${digits.substring(0,3)}-${digits.substring(3,7)}-${digits.substring(7,14)}-${digits.substring(14)}`;
+                }
+                break;
+            }
+        }
+
+        // ── Date of Birth ───────────────────────────────────────────────────
+        // Card format: DD/MM/YYYY  — also handle DD-MM-YYYY / DD.MM.YYYY
+        let dob = null;
+        const dobPatterns = [
+            /\b(\d{2})[\/\-\.](\d{2})[\/\-\.](\d{4})\b/,
+            /Date of Birth[:\s]+(\d{2})[\/\-\.](\d{2})[\/\-\.](\d{4})/i,
+        ];
+        for (const pat of dobPatterns) {
+            const m = text.match(pat);
+            if (m) {
+                // Groups: either (dd,mm,yyyy) from second pattern or (dd,mm,yyyy) from first
+                const dd   = m[1] || m[2];
+                const mm   = m[2] || m[3];
+                const yyyy = m[3] || m[4];
+                if (parseInt(yyyy) > 1900 && parseInt(yyyy) <= new Date().getFullYear()) {
+                    dob = `${dd}/${mm}/${yyyy}`;   // keep as DD/MM/YYYY for display; autofill converts
+                }
+                break;
+            }
+        }
+
+        // ── Full Name (English) ─────────────────────────────────────────────
+        // The card prints: "Name: FIRST MIDDLE LAST" or the name on its own line
+        // following a label line. We try several strategies.
+        let fullName = null;
+
+        // Strategy 1: explicit "Name:" label
+        const nameLabel = text.match(/(?:Name|Full Name)[:\s]+([A-Z][A-Za-z\s\-']{3,60})/i);
+        if (nameLabel) {
+            fullName = nameLabel[1].trim().replace(/\s{2,}/g, ' ');
+        }
+
+        // Strategy 2: ALL-CAPS run of ≥ 2 words (typical of ID card text)
+        if (!fullName) {
+            const capsRun = text.match(/\b([A-Z]{2,}(?:\s+[A-Z]{2,}){1,4})\b/);
+            if (capsRun) {
+                const candidate = capsRun[1].trim();
+                // Exclude obvious non-name tokens
+                const exclude = ['UNITED ARAB EMIRATES', 'EMIRATES ID', 'DATE OF BIRTH', 'NATIONALITY'];
+                if (!exclude.some(e => candidate.includes(e))) {
+                    fullName = candidate;
+                }
+            }
+        }
+
+        // ── Nationality ─────────────────────────────────────────────────────
+        let nationality = null;
+        const natPatterns = [
+            /Nationality[:\s]+([A-Za-z\s]{3,40})/i,
+            /Nat[\.:\s]+([A-Za-z\s]{3,40})/i,
+        ];
+        for (const pat of natPatterns) {
+            const m = text.match(pat);
+            if (m) {
+                nationality = m[1].trim().split('\n')[0].trim();  // take first line only
+                break;
+            }
+        }
+
+        return { emiratesId, fullName, dob, nationality };
+    }
+
+    /**
+     * Fuzzy-match a nationality string from OCR against the <select> options.
+     * Returns the matched option value (country code) or null.
+     */
+    function matchNationality(ocrNat) {
+        if (!ocrNat) return null;
+
+        const needle = ocrNat.toLowerCase().trim();
+        const select = document.getElementById('nationality');
+        const options = Array.from(select.options);
+
+        // Exact match first
+        for (const opt of options) {
+            if (opt.text.toLowerCase() === needle) return opt.value;
+        }
+        // Starts-with match
+        for (const opt of options) {
+            if (opt.text.toLowerCase().startsWith(needle) || needle.startsWith(opt.text.toLowerCase())) {
+                return opt.value;
+            }
+        }
+        // Contains match
+        for (const opt of options) {
+            if (opt.text.toLowerCase().includes(needle) || needle.includes(opt.text.toLowerCase())) {
+                return opt.value;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Autofill the registration form fields with extracted OCR values.
+     */
+    function autofillForm(fields) {
+        const filled = {};
+
+        // Emirates ID number (Step 1)
+        if (fields.emiratesId) {
+            const eidInput = document.getElementById('emirates_id_number');
+            eidInput.value = fields.emiratesId;
+            eidInput.dispatchEvent(new Event('input'));   // trigger formatting
+            filled.emiratesId = true;
+        }
+
+        // Full Name
+        if (fields.fullName) {
+            const nameInput = document.getElementById('full_name');
+            nameInput.value = fields.fullName;
+            filled.fullName = true;
+        }
+
+        // Date of Birth — convert DD/MM/YYYY → YYYY-MM-DD for <input type="date">
+        if (fields.dob) {
+            const parts = fields.dob.split('/');
+            if (parts.length === 3) {
+                const [dd, mm, yyyy] = parts;
+                const isoDate = `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
+                const dobInput = document.getElementById('date_of_birth');
+                dobInput.value = isoDate;
+                filled.dob = true;
+            }
+        }
+
+        // Nationality — set via TomSelect instance
+        if (fields.nationality) {
+            const code = matchNationality(fields.nationality);
+            if (code) {
+                // Find the TomSelect instance on the nationality select
+                const natSelect = document.getElementById('nationality');
+                if (natSelect && natSelect.tomselect) {
+                    natSelect.tomselect.setValue(code);
+                } else {
+                    natSelect.value = code;
+                }
+                filled.nationality = true;
+            }
+        }
+
+        return filled;
+    }
+
+    /**
+     * Show the colour-coded result banner below the front card.
+     */
+    function showOcrResultBanner(fields, filled) {
+        const banner = document.getElementById('ocr-result-banner');
+
+        const fieldDefs = [
+            { key: 'emiratesId', label: 'Emirates ID',   val: fields.emiratesId },
+            { key: 'fullName',   label: 'Full Name',      val: fields.fullName   },
+            { key: 'dob',        label: 'Date of Birth',  val: fields.dob        },
+            { key: 'nationality',label: 'Nationality',    val: fields.nationality },
+        ];
+
+        const allFilled    = fieldDefs.every(f => filled[f.key]);
+        const noneFilled   = fieldDefs.every(f => !filled[f.key]);
+
+        let html = '';
+        if (allFilled) {
+            html += `<p class="font-semibold text-green-700 mb-2 flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        All fields autofilled — please review and correct if needed.
+                     </p>`;
+            banner.className = 'mt-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm';
+        } else if (noneFilled) {
+            html += `<p class="font-semibold text-red-700 mb-2 flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        Could not read the card. Please fill in the fields manually.
+                     </p>`;
+            banner.className = 'mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm';
+        } else {
+            html += `<p class="font-semibold text-yellow-700 mb-2 flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Partially autofilled — please check highlighted fields.
+                     </p>`;
+            banner.className = 'mt-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm';
+        }
+
+        // Per-field status rows
+        html += '<ul class="space-y-1">';
+        for (const f of fieldDefs) {
+            if (filled[f.key]) {
+                html += `<li class="flex items-center gap-2 text-green-700">
+                            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            <span class="font-medium">${f.label}:</span> <span class="truncate">${f.val}</span>
+                         </li>`;
+            } else {
+                html += `<li class="flex items-center gap-2 text-red-600">
+                            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                            <span class="font-medium">${f.label}:</span> <span class="italic text-gray-500">Not detected — fill manually</span>
+                         </li>`;
+            }
+        }
+        html += '</ul>';
+
+        banner.innerHTML = html;
+        banner.classList.remove('hidden');
+    }
+
+    /**
+     * Main handler: called when the user captures/selects the front ID image.
+     * 1. Preview the image
+     * 2. Preprocess it for OCR
+     * 3. Run Tesseract.js
+     * 4. Extract fields via regex
+     * 5. Autofill the form
+     * 6. Show result banner
+     */
+    async function handleFrontImageCapture(input) {
+        if (!input.files || !input.files[0]) return;
+
+        const file = input.files[0];
+
+        // ── 1. Show preview (same as before) ───────────────────────────────
+        const preview   = document.getElementById('image-preview-front');
+        const prompt    = document.getElementById('upload-prompt-front');
+        const removeBtn = document.getElementById('remove-image-btn-front');
+        const overlay   = document.getElementById('ocr-overlay');
+        const banner    = document.getElementById('ocr-result-banner');
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            preview.src = e.target.result;
+            preview.classList.remove('hidden');
+            prompt.classList.add('hidden');
+            removeBtn.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+
+        // Hide any previous banner
+        banner.classList.add('hidden');
+
+        // ── 2. Show OCR loading overlay ─────────────────────────────────────
+        overlay.classList.remove('hidden');
+        document.getElementById('ocr-progress-bar').style.width = '0%';
+        document.getElementById('ocr-progress-pct').textContent = '0%';
+        document.getElementById('ocr-status-text').textContent  = 'Preparing image…';
+
+        // Block the card from triggering the file picker while OCR runs
+        const card = document.getElementById('front-card');
+        card.style.pointerEvents = 'none';
+
+        try {
+            // ── 3. Preprocess ───────────────────────────────────────────────
+            document.getElementById('ocr-status-text').textContent = 'Enhancing image…';
+            const processedBlob = await preprocessImageForOCR(file);
+
+            // ── 4. Run OCR ──────────────────────────────────────────────────
+            const rawText = await runTesseract(processedBlob);
+
+            // ── 5. Extract fields ───────────────────────────────────────────
+            const fields = extractEmiratesIdFields(rawText);
+
+            // ── 6. Autofill ─────────────────────────────────────────────────
+            const filled = autofillForm(fields);
+
+            // ── 7. Result banner ────────────────────────────────────────────
+            showOcrResultBanner(fields, filled);
+
+        } catch (err) {
+            console.error('[Emirates ID OCR] Error:', err);
+            banner.className  = 'mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700';
+            banner.innerHTML  = '<strong>OCR failed.</strong> Please fill in the fields manually.';
+            banner.classList.remove('hidden');
+        } finally {
+            // Hide overlay and re-enable card
+            overlay.classList.add('hidden');
+            card.style.pointerEvents = '';
+        }
     }
 </script>
 @endsection
