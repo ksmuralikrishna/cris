@@ -3,6 +3,16 @@
 @section('title', 'Welcome - Registration')
 
 @section('content')
+<style>
+    /* Make TomSelect dropdowns (Nationality, Area of Residence, Preferred
+       Language, Mobile Code) match the font size / padding of the other
+       text-lg inputs on the form. TomSelect replaces the <select> with its
+       own DOM, so the Tailwind classes on the original <select> don't apply
+       to what's actually rendered on screen — that's why the text looked
+       tiny. */
+    
+</style>
+
 <div class="bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto overflow-hidden">
     <!-- Header / Progress -->
     <div class="bg-gray-50 border-b p-6">
@@ -55,23 +65,9 @@
         <!-- STEP 1: Emirates ID -->
         <div id="step1" class="step-content">
             <div class="space-y-6">
-                <!-- Emirates ID Number -->
-                <div>
-                    <label for="emirates_id_number" class="block text-lg font-medium text-gray-700 mb-2">Emirates ID Number <span class="text-red-500">*</span></label>
-                    <input type="text" name="emirates_id_number" id="emirates_id_number" required 
-                        placeholder="784-YYYY-NNNNNNN-C" value="{{ old('emirates_id_number') }}"
-                        class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary font-mono tracking-widest text-center"
-                        onblur="validateEmiratesId(this)"
-                        oninput="formatEmiratesId(this)"
-                        maxlength="18"
-                        inputmode="numeric">
-                    <p class="mt-2 text-gray-500 text-sm">Format: 784-YYYY-NNNNNNN-C</p>
-                    <p id="eid_duplicate_error" class="mt-2 text-red-600 font-medium hidden">You are already registered with this Emirates ID</p>
-                    @error('emirates_id_number') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
-                </div>
 
-                <!-- Emirates ID Image -->
-                <div class="mt-8 pt-8 border-t">
+                <!-- Emirates ID Image (moved above the ID number - it's the primary capture step) -->
+                <div>
                     <label class="block text-lg font-medium text-gray-700 mb-4">Emirates ID Images <span class="text-gray-400 font-normal">(Optional)</span></label>
 
                     <div class="space-y-4">
@@ -130,7 +126,7 @@
 
 
                         <!-- Back Side -->
-                        <div>
+                        <!-- <div>
                             <p class="text-sm font-medium text-gray-600 mb-2">Back Side</p>
                             <input id="emirates_id_image_back" name="emirates_id_image_back" type="file" accept="image/*" capture="environment" onchange="previewImage(this, 'back')" style="position:fixed;top:-100px;left:-100px;opacity:0;">
                             <div class="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="document.getElementById('emirates_id_image_back').click()">
@@ -144,12 +140,28 @@
                             <div id="remove-image-btn-back" class="hidden mt-2 text-center">
                                 <button type="button" class="text-red-500 font-medium" onclick="removeImage('back')">Remove image</button>
                             </div>
-                        </div>
+                        </div> -->
                     </div>
 
                     @error('emirates_id_image_front') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                     @error('emirates_id_image_back') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
+
+                <!-- Emirates ID Number -->
+                <div class="mt-8 pt-8 border-t">
+                    <label for="emirates_id_number" class="block text-lg font-medium text-gray-700 mb-2">Emirates ID Number <span class="text-red-500">*</span></label>
+                    <input type="text" name="emirates_id_number" id="emirates_id_number" required 
+                        placeholder="784-YYYY-NNNNNNN-C" value="{{ old('emirates_id_number') }}"
+                        class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary font-mono tracking-widest text-center"
+                        onblur="validateEmiratesId(this)"
+                        oninput="formatEmiratesId(this)"
+                        maxlength="18"
+                        inputmode="numeric">
+                    <p class="mt-2 text-gray-500 text-sm">Format: 784-YYYY-NNNNNNN-C</p>
+                    <p id="eid_duplicate_error" class="mt-2 text-red-600 font-medium hidden">You are already registered with this Emirates ID</p>
+                    @error('emirates_id_number') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
             </div>
 
             <div class="mt-8 flex justify-end">
@@ -185,7 +197,17 @@
                             </option>
                         @endforeach
 
+                        <option value="Other" {{ old('nationality') == 'Other' ? 'selected' : '' }}>Other</option>
+
                     </select>
+
+                    <div id="nationality_other_wrap" class="hidden mt-3">
+                        <label for="nationality_other" class="block text-sm font-medium text-gray-600 mb-1">Please specify your nationality <span class="text-red-500">*</span></label>
+                        <input type="text" name="nationality_other" id="nationality_other" value="{{ old('nationality_other') }}"
+                            class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary"
+                            placeholder="Enter your nationality">
+                        @error('nationality_other') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
                     
                     @error('nationality') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
@@ -247,6 +269,15 @@
                             <option value="{{ $area }}" {{ old('area_of_residence') == $area ? 'selected' : '' }}>{{ $area }}</option>
                         @endforeach
                     </select>
+
+                    <div id="area_of_residence_other_wrap" class="hidden mt-3">
+                        <label for="area_of_residence_other" class="block text-sm font-medium text-gray-600 mb-1">Please specify your area <span class="text-red-500">*</span></label>
+                        <input type="text" name="area_of_residence_other" id="area_of_residence_other" value="{{ old('area_of_residence_other') }}"
+                            class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary"
+                            placeholder="Enter your area of residence">
+                        @error('area_of_residence_other') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+
                     @error('area_of_residence') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
@@ -267,7 +298,18 @@
                                 {{ $language }}
                             </option>
                         @endforeach
+
+                        <option value="Other" {{ old('preferred_language') == 'Other' ? 'selected' : '' }}>Other</option>
                     </select>
+
+                    <div id="preferred_language_other_wrap" class="hidden mt-3">
+                        <label for="preferred_language_other" class="block text-sm font-medium text-gray-600 mb-1">Please specify your preferred language <span class="text-red-500">*</span></label>
+                        <input type="text" name="preferred_language_other" id="preferred_language_other" value="{{ old('preferred_language_other') }}"
+                            class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary"
+                            placeholder="Enter your preferred language">
+                        @error('preferred_language_other') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+
                     @error('preferred_language') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
@@ -370,19 +412,39 @@
     let lastCheckedEid = '';
 
 // Searchable dropdowns
-const tomSelectConfig = {
-    controlInput: '<input>',
-    placeholder: 'Search...',
-    maxOptions: null,
-};
 
-new TomSelect('#nationality', tomSelectConfig);
-new TomSelect('#area_of_residence', tomSelectConfig);
-new TomSelect('#preferred_language', tomSelectConfig);
-new TomSelect('select[name="mobile_code"]', {
-    ...tomSelectConfig,
-    maxOptions: null,
-});
+
+// ── "Other" free-text provision for Nationality / Area of Residence / Preferred Language ──
+function setupOtherField(selectId, wrapId, inputId) {
+    const select = document.getElementById(selectId);
+    const wrap = document.getElementById(wrapId);
+    const input = document.getElementById(inputId);
+    if (!select || !wrap || !input) return;
+
+    function toggle() {
+        const isOther = select.value === 'Other' ||
+            (select.options[select.selectedIndex]?.text || '').trim().toLowerCase() === 'other';
+
+        if (isOther) {
+            wrap.classList.remove('hidden');
+            input.setAttribute('required', 'required');
+        } else {
+            wrap.classList.add('hidden');
+            input.removeAttribute('required');
+            input.value = '';
+        }
+    }
+
+    // TomSelect syncs back to the original <select> and fires a native
+    // 'change' event on it, so listening here covers both the plain
+    // select (before TomSelect init) and the TomSelect-driven UI.
+    select.addEventListener('change', toggle);
+    toggle(); // run once on load in case of old() values / validation errors
+}
+
+setupOtherField('nationality', 'nationality_other_wrap', 'nationality_other');
+setupOtherField('area_of_residence', 'area_of_residence_other_wrap', 'area_of_residence_other');
+setupOtherField('preferred_language', 'preferred_language_other_wrap', 'preferred_language_other');
     
     const phoneCountryCodes = @json($phoneCountryCodes);
 
@@ -535,7 +597,7 @@ new TomSelect('select[name="mobile_code"]', {
         // Show error step if validation failed on a specific step
         @if($errors->has('terms_consent') || $errors->has('privacy_consent'))
             nextStep(3);
-        @elseif($errors->has('full_name') || $errors->has('mobile_number_local') || $errors->has('nationality') || $errors->has('area_of_residence') || $errors->has('preferred_language') || $errors->has('date_of_birth'))
+        @elseif($errors->has('full_name') || $errors->has('mobile_number_local') || $errors->has('nationality') || $errors->has('nationality_other') || $errors->has('area_of_residence') || $errors->has('area_of_residence_other') || $errors->has('preferred_language') || $errors->has('preferred_language_other') || $errors->has('date_of_birth'))
             nextStep(2);
         @else
             nextStep(1); // Default to Emirates ID step
@@ -547,7 +609,12 @@ new TomSelect('select[name="mobile_code"]', {
         document.getElementById('summary_mobile').textContent = document.querySelector('select[name="mobile_code"]').value + document.getElementById('mobile_number_local').value;
         
         const natSelect = document.getElementById('nationality');
-        document.getElementById('summary_nationality').textContent = natSelect.options[natSelect.selectedIndex]?.text || '-';
+        let natText = natSelect.options[natSelect.selectedIndex]?.text || '-';
+        if (natSelect.value === 'Other') {
+            const natOtherVal = document.getElementById('nationality_other').value.trim();
+            natText = natOtherVal ? natOtherVal : 'Other';
+        }
+        document.getElementById('summary_nationality').textContent = natText;
         
         const eid = document.getElementById('emirates_id_number').value;
         if(eid && eid.length >= 15) {
@@ -690,15 +757,36 @@ new TomSelect('select[name="mobile_code"]', {
     const lang   = document.getElementById('preferred_language').value;
     const dob    = document.getElementById('date_of_birth').value;
 
+    const natOther  = document.getElementById('nationality_other').value.trim();
+    const areaOther = document.getElementById('area_of_residence_other').value.trim();
+    const langOther = document.getElementById('preferred_language_other').value.trim();
+
     if (!name || !mobile || !nat || !area || !lang || !dob) {
         document.getElementById('registrationForm').reportValidity();
         if (!dob) {
-            document.getElementById('dob-display').style.color = '#dc2626';
-            document.getElementById('dob_age_error').classList.remove('hidden');
-            document.getElementById('dob_age_error').textContent = 'Please select your date of birth.';
+            document.getElementById('dob-display') && (document.getElementById('dob-display').style.color = '#dc2626');
+            document.getElementById('dob_age_error') && document.getElementById('dob_age_error').classList.remove('hidden');
+            if (document.getElementById('dob_age_error')) {
+                document.getElementById('dob_age_error').textContent = 'Please select your date of birth.';
+            }
         }
         return;
     }
+
+    // If "Other" is selected, make sure the free-text field is filled in
+    if (nat === 'Other' && !natOther) {
+        document.getElementById('nationality_other').reportValidity();
+        return;
+    }
+    if (area === 'Other' && !areaOther) {
+        document.getElementById('area_of_residence_other').reportValidity();
+        return;
+    }
+    if (lang === 'Other' && !langOther) {
+        document.getElementById('preferred_language_other').reportValidity();
+        return;
+    }
+
     nextStep(3);
 }
 
