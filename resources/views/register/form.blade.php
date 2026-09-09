@@ -68,7 +68,7 @@
 
                 <!-- Emirates ID Image (moved above the ID number - it's the primary capture step) -->
                 <div>
-                    <label class="block text-lg font-medium text-gray-700 mb-4">Emirates ID Images <span class="text-gray-400 font-normal">(Optional)</span></label>
+                    <label class="block text-lg font-medium text-gray-700 mb-4">Scan Emirates ID <span class="text-gray-400 font-normal"></span></label>
 
                     <div class="space-y-4">
                         <!-- Front Side (OCR-enabled) -->
@@ -87,7 +87,7 @@
                                 <div class="space-y-1 text-center" id="upload-prompt-front">
                                     <svg class="mx-auto h-10 w-10 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                                     <p class="text-primary font-medium">Tap to capture front</p>
-                                    <p class="text-sm text-gray-500">OCR will autofill the form &middot; Max 5MB</p>
+                                    <p class="text-sm text-gray-500">Hold your ID closer to the camera until it comes into focus</p>
                                 </div>
 
                                 <!-- Image preview -->
@@ -176,7 +176,8 @@
                 <div>
                     <label for="full_name" class="block text-lg font-medium text-gray-700 mb-2">Full Name <span class="text-red-500">*</span></label>
                     <input type="text" name="full_name" id="full_name" required value="{{ old('full_name') }}"
-                           class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary">
+                           class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary" oninput="this.value=this.value.replace(/[0-9]/g,'')"
+       onkeypress="return !/[0-9]/.test(event.key)">
                     @error('full_name') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
@@ -205,7 +206,8 @@
                         <label for="nationality_other" class="block text-sm font-medium text-gray-600 mb-1">Please specify your nationality <span class="text-red-500">*</span></label>
                         <input type="text" name="nationality_other" id="nationality_other" value="{{ old('nationality_other') }}"
                             class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary"
-                            placeholder="Enter your nationality">
+                            placeholder="Enter your nationality" oninput="this.value=this.value.replace(/[0-9]/g,'')"
+       onkeypress="return !/[0-9]/.test(event.key)">
                         @error('nationality_other') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                     
@@ -306,7 +308,8 @@
                         <label for="preferred_language_other" class="block text-sm font-medium text-gray-600 mb-1">Please specify your preferred language <span class="text-red-500">*</span></label>
                         <input type="text" name="preferred_language_other" id="preferred_language_other" value="{{ old('preferred_language_other') }}"
                             class="w-full rounded-lg border-gray-300 border p-4 text-lg focus:ring-primary focus:border-primary"
-                            placeholder="Enter your preferred language">
+                            placeholder="Enter your preferred language" oninput="this.value=this.value.replace(/[0-9]/g,'')"
+                            onkeypress="return !/[0-9]/.test(event.key)">
                         @error('preferred_language_other') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
 
@@ -411,7 +414,9 @@
     let isCheckingEid = false;
     let lastCheckedEid = '';
 
-// Searchable dropdowns
+    function blockNumbers(input) {
+        input.value = input.value.replace(/[0-9]/g, '');
+    }
 
 
 // ── "Other" free-text provision for Nationality / Area of Residence / Preferred Language ──
@@ -994,9 +999,12 @@ setupOtherField('preferred_language', 'preferred_language_other_wrap', 'preferre
         let fullName = null;
 
         // Strategy 1: explicit "Name:" label
-        const nameLabel = text.match(/(?:Name|Full Name)[:\s]+([A-Z][A-Za-z\s\-']{3,60})/i);
+        const nameLabel = text.match(
+            /(?:Name|Full Name)[:\s]+([A-Z][A-Za-z\s\-']{3,60}?)(?=\s*(?:Date\s+of\s+Birth|Date\s+of|DOB|Gender|Nationality|Sex)\b|$)/i
+        );
         if (nameLabel) {
             fullName = nameLabel[1].trim().replace(/\s{2,}/g, ' ');
+           
         }
 
         // Strategy 2: ALL-CAPS run of ≥ 2 words (typical of ID card text)
@@ -1008,6 +1016,7 @@ setupOtherField('preferred_language', 'preferred_language_other_wrap', 'preferre
                 const exclude = ['UNITED ARAB EMIRATES', 'EMIRATES ID', 'DATE OF BIRTH', 'NATIONALITY'];
                 if (!exclude.some(e => candidate.includes(e))) {
                     fullName = candidate;
+                   
                 }
             }
         }
@@ -1218,6 +1227,7 @@ setupOtherField('preferred_language', 'preferred_language_other_wrap', 'preferre
 
             // ── 4. Run OCR ──────────────────────────────────────────────────
             const rawText = await runTesseract(processedBlob);
+           
 
             // ── 5. Extract fields ───────────────────────────────────────────
             const fields = extractEmiratesIdFields(rawText);
